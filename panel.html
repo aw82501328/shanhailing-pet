@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>山海经 · 控制面板</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #14141f;
+    --surface2: #1e1e2e;
+    --text: #f0e6f6;
+    --text2: #9a8fa8;
+    --accent: #ff7eb3;
+    --accent-hover: #ff9ec8;
+    --accent2: #c4a5f5;
+    --accent2-hover: #d9c5ff;
+    --danger: #ff6b6b;
+    --danger-hover: #ff8e8e;
+    --success: #6ee7b7;
+    --success-glow: rgba(110, 231, 183, 0.2);
+    --warning: #fbbf24;
+    --border: rgba(255, 255, 255, 0.06);
+    --shadow-glow: 0 0 20px rgba(255, 126, 179, 0.08);
+    --radius: 18px;
+    --radius-sm: 12px;
+    --radius-xs: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Microsoft YaHei', 'PingFang SC', -apple-system, sans-serif;
+    background: var(--bg); color: var(--text);
+    overflow-x: hidden; user-select: none; -webkit-user-select: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Header ────────────────── */
+  .header {
+    background: linear-gradient(160deg, #1a1025 0%, #0f0f1a 50%, #121222 100%);
+    padding: 28px 28px; border-bottom: 1px solid rgba(255,126,179,0.1);
+    display: flex; align-items: center; gap: 16px; position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute; top: -30px; right: -20px;
+    width: 120px; height: 120px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,126,179,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .header::after {
+    content: '';
+    position: absolute; bottom: -40px; left: 30%;
+    width: 100px; height: 100px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(196,165,245,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .header-icon {
+    width: 52px; height: 52px; border-radius: 16px;
+    background: linear-gradient(135deg, #ff7eb3, #c4a5f5);
+    display: flex; align-items: center; justify-content: center; font-size: 28px;
+    box-shadow: 0 4px 20px rgba(255,126,179,0.25);
+    flex-shrink: 0; z-index: 1;
+  }
+  .header h1 {
+    font-size: 20px; font-weight: 800; z-index: 1;
+    background: linear-gradient(135deg, #ffb8d4, #c4b5fd);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; letter-spacing: 0.5px;
+  }
+  .header p { font-size: 12px; color: var(--text2); margin-top: 3px; z-index: 1; }
+
+  /* ── Content ───────────────── */
+  .content {
+    padding: 24px 28px; display: flex; flex-direction: column; gap: 20px;
+    max-height: calc(100vh - 140px); overflow-y: auto;
+  }
+  .content::-webkit-scrollbar { width: 5px; }
+  .content::-webkit-scrollbar-track { background: transparent; }
+  .content::-webkit-scrollbar-thumb {
+    background: rgba(255,126,179,0.15); border-radius: 10px;
+  }
+  .content::-webkit-scrollbar-thumb:hover { background: rgba(255,126,179,0.25); }
+
+  /* ── Section Card ──────────── */
+  .section {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 22px; border: 1px solid var(--border);
+    box-shadow: var(--shadow-glow);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .section:hover {
+    border-color: rgba(255,126,179,0.12);
+    box-shadow: 0 0 30px rgba(255,126,179,0.12);
+  }
+  .section-title {
+    font-size: 14px; font-weight: 700; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px; color: var(--text);
+    letter-spacing: 0.3px;
+  }
+  .section-title .icon {
+    font-size: 20px; width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,126,179,0.08); border-radius: 10px;
+  }
+
+  /* ── Media Grid ────────────── */
+  .media-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 10px; margin-bottom: 16px;
+  }
+  .media-item {
+    position: relative; aspect-ratio: 1; border-radius: var(--radius-xs);
+    overflow: hidden; border: 2px solid rgba(255,255,255,0.06);
+    cursor: pointer; transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background: var(--surface2);
+  }
+  .media-item:hover {
+    border-color: var(--accent);
+    transform: scale(1.06);
+    box-shadow: 0 4px 20px rgba(255,126,179,0.2);
+  }
+  .media-item.used-any {
+    border-color: var(--warning);
+    box-shadow: 0 0 12px rgba(251,191,36,0.1);
+  }
+  .media-item img, .media-item video {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .media-item .overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(10,10,15,0.4) 0%, rgba(10,10,15,0.85) 100%);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    opacity: 0; transition: opacity 0.25s;
+  }
+  .media-item:hover .overlay { opacity: 1; }
+  .media-item .del-btn {
+    background: rgba(255,107,107,0.85); color: #fff; border: none;
+    border-radius: 50%; width: 30px; height: 30px; cursor: pointer;
+    font-size: 14px; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; backdrop-filter: blur(4px);
+  }
+  .media-item .del-btn:hover {
+    background: var(--danger);
+    transform: scale(1.1);
+    box-shadow: 0 0 16px rgba(255,107,107,0.4);
+  }
+  .media-item .used-badge {
+    position: absolute; top: 5px; left: 5px; font-size: 9px;
+    padding: 3px 8px; border-radius: 10px; font-weight: 700;
+    background: var(--warning); color: #1a1a1a;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── Upload Zone ───────────── */
+  .upload-zone {
+    border: 2px dashed rgba(255,126,179,0.2); border-radius: var(--radius-sm);
+    padding: 24px; text-align: center; cursor: pointer;
+    transition: all 0.3s ease; color: var(--text2); font-size: 13px;
+    background: rgba(255,126,179,0.02);
+  }
+  .upload-zone:hover {
+    border-color: var(--accent);
+    background: rgba(255,126,179,0.06);
+    color: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 24px rgba(255,126,179,0.08);
+  }
+  .upload-zone .icon { font-size: 32px; margin-bottom: 10px; }
+
+  /* ── State Mapping Cards ───── */
+  .state-card {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--surface2); border-radius: var(--radius-sm);
+    padding: 12px 16px; border: 1px solid rgba(255,255,255,0.04);
+    transition: all 0.25s ease;
+  }
+  .state-card:hover {
+    border-color: rgba(255,126,179,0.2);
+    box-shadow: 0 2px 16px rgba(255,126,179,0.06);
+    transform: translateX(3px);
+  }
+  .state-card.has-media {
+    border-color: rgba(110,231,183,0.25);
+    box-shadow: 0 0 14px var(--success-glow);
+  }
+  .state-icon {
+    font-size: 24px; width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,126,179,0.06); flex-shrink: 0;
+  }
+  .state-info { flex: 1; min-width: 0; }
+  .state-name { font-size: 13px; font-weight: 700; }
+  .state-desc { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .state-media-name {
+    font-size: 10px; color: var(--success); margin-top: 3px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-weight: 600;
+  }
+  .state-select {
+    background: var(--bg); border: 1px solid rgba(255,255,255,0.06);
+    color: var(--text); padding: 7px 12px; border-radius: var(--radius-xs);
+    font-size: 12px; outline: none; min-width: 130px;
+    font-family: inherit; cursor: pointer; transition: all 0.2s;
+  }
+  .state-select:hover { border-color: rgba(255,126,179,0.2); }
+  .state-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,126,179,0.1); }
+
+  /* ── Sliders ───────────────── */
+  .slider-group { display: flex; align-items: center; gap: 14px; }
+  .slider-group input[type="range"] {
+    flex: 1; -webkit-appearance: none; height: 6px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, rgba(255,126,179,0.2), rgba(196,165,245,0.15));
+    outline: none;
+  }
+  .slider-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 24px; height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff7eb3, #c4a5f5);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 14px rgba(255,126,179,0.4), 0 2px 8px rgba(0,0,0,0.3);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .slider-group input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    box-shadow: 0 0 22px rgba(255,126,179,0.6), 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .size-value {
+    font-size: 13px; font-weight: 700; color: var(--accent);
+    min-width: 54px; text-align: center; background: var(--surface2);
+    padding: 5px 12px; border-radius: var(--radius-xs);
+    border: 1px solid rgba(255,126,179,0.1);
+  }
+
+  .sleep-slider-group {
+    display: flex; align-items: center; gap: 12px; margin-top: 8px;
+  }
+  .sleep-slider-group input[type="range"] {
+    flex: 1; -webkit-appearance: none; height: 6px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, rgba(196,165,245,0.2), rgba(110,231,183,0.15));
+    outline: none;
+  }
+  .sleep-slider-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 24px; height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c4a5f5, #6ee7b7);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 14px rgba(196,165,245,0.4), 0 2px 8px rgba(0,0,0,0.3);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .sleep-slider-group input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    box-shadow: 0 0 22px rgba(196,165,245,0.6), 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  /* ── Editable List ─────────── */
+  .editable-list { display: flex; flex-direction: column; gap: 10px; }
+  .editable-item {
+    background: var(--surface2); border-radius: var(--radius-sm);
+    padding: 14px 16px; border: 1px solid rgba(255,255,255,0.04);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .editable-item:hover {
+    border-color: rgba(255,126,179,0.12);
+    box-shadow: 0 2px 12px rgba(255,126,179,0.04);
+  }
+  .editable-item .row {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  }
+  .editable-item input, .editable-item select {
+    background: var(--bg); border: 1px solid rgba(255,255,255,0.06);
+    color: var(--text); padding: 8px 14px; border-radius: var(--radius-xs);
+    font-size: 13px; outline: none; transition: all 0.2s; font-family: inherit;
+  }
+  .editable-item input:hover, .editable-item select:hover {
+    border-color: rgba(255,126,179,0.15);
+  }
+  .editable-item input:focus, .editable-item select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(255,126,179,0.08);
+  }
+  .editable-item .label-input { flex: 1; min-width: 70px; }
+  .editable-item .responses-input { flex: 2; min-width: 130px; }
+  .editable-item .state-select-sm { flex: 1; min-width: 90px; }
+  .editable-item .row+.row { margin-top: 10px; }
+  .tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: linear-gradient(135deg, #ff7eb3, #c4a5f5);
+    color: #fff; padding: 4px 12px;
+    border-radius: 14px; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── Buttons ───────────────── */
+  .btn {
+    padding: 9px 20px; border-radius: 10px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 700; transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    font-family: inherit; display: inline-flex; align-items: center; gap: 7px;
+    letter-spacing: 0.3px;
+  }
+  .btn-accent {
+    background: linear-gradient(135deg, #ff7eb3, #c4a5f5); color: #fff;
+    box-shadow: 0 4px 16px rgba(255,126,179,0.2);
+  }
+  .btn-accent:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(255,126,179,0.35);
+  }
+  .btn-accent:active { transform: scale(0.96); }
+  .btn-danger {
+    background: transparent; color: var(--danger);
+    border: 1px solid rgba(255,107,107,0.25);
+  }
+  .btn-danger:hover {
+    background: rgba(255,107,107,0.12);
+    border-color: var(--danger);
+    box-shadow: 0 0 16px rgba(255,107,107,0.15);
+  }
+  .btn-ghost {
+    background: transparent; color: var(--text2);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .btn-ghost:hover {
+    border-color: rgba(255,126,179,0.3);
+    color: var(--accent-hover);
+    box-shadow: 0 2px 12px rgba(255,126,179,0.08);
+  }
+  .btn-sm { padding: 5px 14px; font-size: 12px; border-radius: 8px; }
+  .btn-icon {
+    width: 32px; height: 32px; padding: 0; display: flex;
+    align-items: center; justify-content: center; border-radius: 50%;
+  }
+
+  /* ── Toggle ────────────────── */
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0;
+  }
+  .toggle-label { font-size: 13px; color: var(--text2); font-weight: 500; }
+  .toggle {
+    width: 48px; height: 26px; border-radius: 14px;
+    background: rgba(255,255,255,0.06);
+    cursor: pointer; position: relative; transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+  .toggle.on {
+    background: linear-gradient(135deg, #6ee7b7, #34d399);
+    box-shadow: 0 0 14px rgba(110,231,183,0.3);
+    border-color: rgba(110,231,183,0.3);
+  }
+  .toggle::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 18px; height: 18px; border-radius: 50%; background: #fff;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .toggle.on::after { transform: translateX(22px); }
+
+  /* ── Footer ────────────────── */
+  .footer {
+    padding: 18px 28px;
+    border-top: 1px solid rgba(255,126,179,0.08);
+    background: var(--surface);
+    display: flex; justify-content: flex-end; gap: 10px;
+  }
+
+  /* ── Toast ─────────────────── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(135deg, #6ee7b7, #34d399); color: #0a0a0f;
+    padding: 12px 28px;
+    border-radius: 24px; font-size: 13px; font-weight: 700;
+    opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none;
+    z-index: 999;
+    box-shadow: 0 4px 24px rgba(110,231,183,0.3);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-2px); }
+  .toast.error {
+    background: linear-gradient(135deg, #ff6b6b, #f87171);
+    box-shadow: 0 4px 24px rgba(255,107,107,0.3);
+  }
+
+  .tip {
+    font-size: 11px; color: var(--text2); margin-top: 8px; line-height: 1.6;
+    padding: 8px 12px; background: rgba(255,126,179,0.03);
+    border-radius: var(--radius-xs); border-left: 3px solid rgba(255,126,179,0.15);
+  }
+  .empty-state {
+    text-align: center; padding: 28px; color: var(--text2); font-size: 13px;
+    background: rgba(255,255,255,0.01); border-radius: var(--radius-sm);
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">🐕</div>
+  <div>
+    <h1>山海经 · 桌宠控制面板</h1>
+    <p>管理素材 · 状态映射 · 自定义互动</p>
+  </div>
+</div>
+
+<div class="content" id="content">
+
+  <!-- ═══ Section: 素材管理 ═══ -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🖼️</span>素材管理</div>
+    <div class="media-grid" id="mediaGrid">
+      <div class="empty-state">暂无素材，点击下方按钮上传</div>
+    </div>
+    <div class="upload-zone" id="uploadZone">
+      <div class="icon">📁</div>
+      <div>点击上传素材</div>
+      <div style="font-size:11px;margin-top:4px">支持 webp / webm / mp4 / mov / gif / png / jpg / apng</div>
+    </div>
+  </div>
+
+  <!-- ═══ Section: 状态 → 素材映射 ═══ -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🔀</span>状态素材映射</div>
+    <div style="display:flex;flex-direction:column;gap:10px" id="stateMappingList">
+      <div class="empty-state">加载中...</div>
+    </div>
+    <div class="tip">为每个宠物状态指定对应的素材文件。留空则使用默认占位形象。</div>
+  </div>
+
+  <!-- ═══ Section: 显示大小 ═══ -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📏</span>显示大小</div>
+    <div class="slider-group">
+      <span style="font-size:12px;color:var(--text2)">小</span>
+      <input type="range" id="sizeSlider" min="80" max="400" value="200" step="10">
+      <span style="font-size:12px;color:var(--text2)">大</span>
+      <span class="size-value" id="sizeValue">200px</span>
+    </div>
+  </div>
+
+  <!-- ═══ Section: 移动速度 ═══ -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🏃</span>玩耍移动速度</div>
+    <div class="slider-group">
+      <span style="font-size:12px;color:var(--text2)">慢</span>
+      <input type="range" id="speedSlider" min="1" max="10" value="5" step="1">
+      <span style="font-size:12px;color:var(--text2)">快</span>
+      <span class="size-value" id="speedValue">5</span>
+    </div>
+    <div class="tip">宠物跟踪鼠标时的移动速度。数值越大越快，推荐默认值 5。</div>
+  </div>
+
+  <!-- ═══ Section: 睡眠设置 ═══ -->
+  <div class="section">
+    <div class="section-title"><span class="icon">😴</span>空闲睡眠设置</div>
+    <div class="toggle-row">
+      <span class="toggle-label">启用闲置消息与睡眠</span>
+      <button class="toggle" id="idleToggle"></button>
+    </div>
+    <div class="sleep-slider-group" style="margin-top:12px">
+      <span style="font-size:12px;color:var(--text2);min-width:70px">进入睡眠:</span>
+      <input type="range" id="sleepSlider" min="10" max="120" value="30" step="5">
+      <span class="size-value" id="sleepValue">30秒</span>
+    </div>
+    <div class="tip">无操作多少秒后自动进入「睡觉」状态。设为更大的值可延长活跃时间。</div>
+  </div>
+
+  <!-- ═══ Section: 互动按钮 ═══ -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🔘</span>自定义互动按钮</div>
+    <div class="editable-list" id="btnEditorList"></div>
+    <button class="btn btn-accent btn-sm" id="addBtn" style="margin-top:12px">+ 添加互动按钮</button>
+    <div class="tip">「状态」决定点击后桌宠切换到哪个动作状态,「回应」用英文逗号 , 分隔多条随机回复</div>
+  </div>
+
+  <!-- ═══ Section: 点击回应 ═══ -->
+  <div class="section">
+    <div class="section-title"><span class="icon">💬</span>点击宠物随机回应</div>
+    <input type="text" id="clickResponsesInput"
+           style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:13px;outline:none;font-family:inherit"
+           placeholder="用英文逗号分隔，如：汪!, 呜~, 干嘛呀~">
+    <div class="tip">单击桌宠时随机弹出。点击行为本身会触发「玩耍」状态。</div>
+  </div>
+
+  <!-- ═══ Section: 闲置消息 ═══ -->
+  <div class="section">
+    <div class="section-title"><span class="icon">⏰</span>闲置自动消息</div>
+    <div class="editable-list" id="idleEditorList" style="margin-top:12px"></div>
+    <button class="btn btn-accent btn-sm" id="addIdleMsg" style="margin-top:12px">+ 添加闲置消息</button>
+    <div class="tip">「间隔」单位毫秒（30000=30秒）。仅「正常」状态下弹出，睡觉时不显示。</div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <button class="btn btn-ghost" id="resetBtn">🔄 恢复默认</button>
+  <button class="btn btn-accent" id="saveBtn">💾 保存设置</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  (function() {
+    const api = window.petAPI;
+
+    // ── DOM ───────────────────────────────────────────
+    const mediaGrid       = document.getElementById('mediaGrid');
+    const uploadZone      = document.getElementById('uploadZone');
+    const sizeSlider      = document.getElementById('sizeSlider');
+    const sizeValue       = document.getElementById('sizeValue');
+    const speedSlider     = document.getElementById('speedSlider');
+    const speedValue      = document.getElementById('speedValue');
+    const sleepSlider     = document.getElementById('sleepSlider');
+    const sleepValue      = document.getElementById('sleepValue');
+    const stateMappingList = document.getElementById('stateMappingList');
+    const btnEditorList   = document.getElementById('btnEditorList');
+    const addBtn          = document.getElementById('addBtn');
+    const clickResponsesInput = document.getElementById('clickResponsesInput');
+    const idleToggle      = document.getElementById('idleToggle');
+    const idleEditorList  = document.getElementById('idleEditorList');
+    const addIdleMsg      = document.getElementById('addIdleMsg');
+    const saveBtn         = document.getElementById('saveBtn');
+    const resetBtn        = document.getElementById('resetBtn');
+    const toastEl         = document.getElementById('toast');
+
+    let config = null;
+    let mediaList = [];
+    let petStates = null;  // { normal: {label,icon,anim,desc}, ... }
+
+    // ── Toast ──────────────────────────────────────────
+    function toast(msg, isError) {
+      toastEl.textContent = msg;
+      toastEl.className = 'toast' + (isError ? ' error' : '') + ' show';
+      setTimeout(() => { toastEl.className = 'toast'; }, 2000);
+    }
+
+    // ── Init ───────────────────────────────────────────
+    async function init() {
+      config = await api.getConfig();
+      mediaList = await api.getMediaList();
+      petStates = await api.getPetStates();
+      renderAll();
+    }
+
+    function renderAll() {
+      renderMediaGrid();
+      renderStateMapping();
+      renderSize();
+      renderSpeed();
+      renderSleepSetting();
+      renderInteractionButtons();
+      renderClickResponses();
+      renderIdleSettings();
+    }
+
+    // ── Media Grid ─────────────────────────────────────
+    function getUsedMediaMap() {
+      // Build a map of filename → which states use it
+      const map = {};
+      if (config?.stateMedias) {
+        for (const [state, fname] of Object.entries(config.stateMedias)) {
+          if (fname) {
+            if (!map[fname]) map[fname] = [];
+            const st = petStates?.[state];
+            map[fname].push(st ? st.label : state);
+          }
+        }
+      }
+      return map;
+    }
+
+    function renderMediaGrid() {
+      mediaGrid.innerHTML = '';
+      if (mediaList.length === 0) {
+        mediaGrid.innerHTML = '<div class="empty-state">暂无素材，点击下方按钮上传</div>';
+        return;
+      }
+      const usedMap = getUsedMediaMap();
+
+      mediaList.forEach(filename => {
+        const ext = filename.split('.').pop().toLowerCase();
+        const isVideo = ['webm','mp4','mov'].includes(ext);
+        const usedBy = usedMap[filename];
+
+        const item = document.createElement('div');
+        item.className = 'media-item' + (usedBy ? ' used-any' : '');
+        item.title = filename + (usedBy ? '\n已绑定: ' + usedBy.join(', ') : '');
+
+        // Preview placeholder
+        const preview = document.createElement('div');
+        preview.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;color:rgba(255,255,255,0.5)';
+        preview.textContent = isVideo ? '🎬' : '🖼️';
+        item.appendChild(preview);
+
+        // Real preview
+        api.getMediaPath(filename).then(filePath => {
+          if (!filePath) return;
+          if (isVideo) {
+            const v = document.createElement('video'); v.src = 'file://' + filePath;
+            v.muted = true; v.loop = true;
+            v.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0';
+            v.play().catch(() => {});
+            preview.innerHTML = ''; preview.appendChild(v);
+          } else {
+            const img = document.createElement('img'); img.src = 'file://' + filePath;
+            img.style.cssText = 'width:100%;height:100%;object-fit:cover;position:absolute;inset:0';
+            preview.innerHTML = ''; preview.appendChild(img);
+          }
+        });
+
+        // Used badge
+        if (usedBy) {
+          const badge = document.createElement('div');
+          badge.className = 'used-badge';
+          badge.textContent = usedBy.length === 1 ? usedBy[0].slice(0,4) : usedBy.length + '态';
+          badge.title = '绑定状态: ' + usedBy.join(', ');
+          item.appendChild(badge);
+        }
+
+        // Overlay with delete
+        const overlay = document.createElement('div');
+        overlay.className = 'overlay';
+        const delBtn = document.createElement('button');
+        delBtn.className = 'del-btn'; delBtn.textContent = '✕'; delBtn.title = '删除';
+        delBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await api.deleteMedia(filename);
+          mediaList = await api.getMediaList();
+          config = await api.getConfig();
+          renderAll();
+          toast('素材已删除');
+        });
+        overlay.appendChild(delBtn);
+        item.appendChild(overlay);
+
+        mediaGrid.appendChild(item);
+      });
+    }
+
+    // ── Upload ─────────────────────────────────────────
+    uploadZone.addEventListener('click', async () => {
+      const result = await api.uploadMedia();
+      if (result.success && result.files.length > 0) {
+        mediaList = await api.getMediaList();
+        config = await api.getConfig();
+        renderAll();
+        toast(`成功导入 ${result.files.length} 个素材`);
+      }
+    });
+
+    // ── State Mapping ──────────────────────────────────
+    function renderStateMapping() {
+      stateMappingList.innerHTML = '';
+      if (!petStates) {
+        stateMappingList.innerHTML = '<div class="empty-state">加载状态定义失败</div>';
+        return;
+      }
+
+      for (const [stateKey, stateDef] of Object.entries(petStates)) {
+        const currentFile = (config.stateMedias && config.stateMedias[stateKey]) || '';
+        const card = document.createElement('div');
+        card.className = 'state-card' + (currentFile ? ' has-media' : '');
+
+        const icon = document.createElement('div');
+        icon.className = 'state-icon';
+        icon.textContent = stateDef.icon;
+        card.appendChild(icon);
+
+        const info = document.createElement('div');
+        info.className = 'state-info';
+
+        const name = document.createElement('div');
+        name.className = 'state-name';
+        name.textContent = stateDef.label;
+        info.appendChild(name);
+
+        const desc = document.createElement('div');
+        desc.className = 'state-desc';
+        desc.textContent = stateDef.desc;
+        info.appendChild(desc);
+
+        if (currentFile) {
+          const fname = document.createElement('div');
+          fname.className = 'state-media-name';
+          fname.textContent = '📎 ' + currentFile;
+          info.appendChild(fname);
+        }
+
+        card.appendChild(info);
+
+        const select = document.createElement('select');
+        select.className = 'state-select';
+        select.dataset.state = stateKey;
+        select.innerHTML = '<option value="">-- 默认占位 --</option>';
+        mediaList.forEach(f => {
+          const sel = f === currentFile ? ' selected' : '';
+          select.innerHTML += `<option value="${escapeHtml(f)}"${sel}>${escapeHtml(f)}</option>`;
+        });
+        select.addEventListener('change', () => {
+          if (!config.stateMedias) config.stateMedias = {};
+          config.stateMedias[stateKey] = select.value;
+          // Re-render to reflect changes in badges / borders
+          renderStateMapping();
+          renderMediaGrid();
+        });
+        card.appendChild(select);
+
+        stateMappingList.appendChild(card);
+      }
+    }
+
+    // ── Size ───────────────────────────────────────────
+    function renderSize() {
+      sizeSlider.value = config.petSize;
+      sizeValue.textContent = config.petSize + 'px';
+    }
+    sizeSlider.addEventListener('input', () => {
+      const val = parseInt(sizeSlider.value);
+      sizeValue.textContent = val + 'px';
+      config.petSize = val;
+    });
+
+    // ── Speed ──────────────────────────────────────────
+    function renderSpeed() {
+      speedSlider.value = config.moveSpeed || 5;
+      speedValue.textContent = config.moveSpeed || 5;
+    }
+    speedSlider.addEventListener('input', () => {
+      const val = parseInt(speedSlider.value);
+      speedValue.textContent = val;
+      config.moveSpeed = val;
+    });
+
+    // ── Sleep Setting ──────────────────────────────────
+    function renderSleepSetting() {
+      sleepSlider.value = config.sleepAfterIdleSec || 30;
+      sleepValue.textContent = (config.sleepAfterIdleSec || 30) + '秒';
+    }
+    sleepSlider.addEventListener('input', () => {
+      const val = parseInt(sleepSlider.value);
+      sleepValue.textContent = val + '秒';
+      config.sleepAfterIdleSec = val;
+    });
+
+    // ── Interaction Buttons ────────────────────────────
+    function renderInteractionButtons() {
+      btnEditorList.innerHTML = '';
+      if (!config.interactionButtons || config.interactionButtons.length === 0) {
+        btnEditorList.innerHTML = '<div class="empty-state">暂无互动按钮，点击下方添加</div>';
+        return;
+      }
+      config.interactionButtons.forEach((btn, idx) => {
+        const item = document.createElement('div');
+        item.className = 'editable-item';
+
+        // Build state dropdown options
+        let stateOpts = '';
+        if (petStates) {
+          for (const [key, def] of Object.entries(petStates)) {
+            const sel = btn.state === key ? ' selected' : '';
+            stateOpts += `<option value="${key}"${sel}>${def.icon} ${def.label}</option>`;
+          }
+        }
+
+        item.innerHTML = `
+          <div class="row">
+            <span class="tag">按钮 ${idx + 1}</span>
+            <input class="label-input" value="${escapeHtml(btn.label)}" placeholder="按钮标签" data-idx="${idx}" data-field="label">
+            <select class="state-select-sm" data-idx="${idx}" data-field="state">
+              ${stateOpts}
+            </select>
+            <button class="btn btn-danger btn-sm btn-icon remove-int-btn" data-idx="${idx}" title="删除">✕</button>
+          </div>
+          <div class="row">
+            <span style="font-size:11px;color:var(--text2);min-width:40px">回应:</span>
+            <input class="responses-input" value="${escapeHtml((btn.responses || []).join(','))}" placeholder="用逗号分隔回复" data-idx="${idx}" data-field="responses">
+          </div>
+        `;
+
+        // Input / select change handlers
+        item.querySelectorAll('input, select').forEach(el => {
+          el.addEventListener('input', () => {
+            const i = parseInt(el.dataset.idx);
+            const field = el.dataset.field;
+            if (field === 'label') config.interactionButtons[i].label = el.value;
+            else if (field === 'state') config.interactionButtons[i].state = el.value;
+            else if (field === 'responses') config.interactionButtons[i].responses = el.value.split(',').map(s => s.trim()).filter(Boolean);
+          });
+          el.addEventListener('change', () => {
+            const i = parseInt(el.dataset.idx);
+            const field = el.dataset.field;
+            if (field === 'state') config.interactionButtons[i].state = el.value;
+          });
+        });
+
+        item.querySelector('.remove-int-btn').addEventListener('click', () => {
+          config.interactionButtons.splice(idx, 1);
+          renderInteractionButtons();
+        });
+
+        btnEditorList.appendChild(item);
+      });
+    }
+
+    addBtn.addEventListener('click', () => {
+      if (!config.interactionButtons) config.interactionButtons = [];
+      config.interactionButtons.push({ label: '新按钮', state: 'happy', responses: ['你好呀~', '真棒!'] });
+      renderInteractionButtons();
+    });
+
+    // ── Click Responses ────────────────────────────────
+    function renderClickResponses() {
+      clickResponsesInput.value = (config.clickResponses || []).join(',');
+    }
+    clickResponsesInput.addEventListener('input', () => {
+      config.clickResponses = clickResponsesInput.value.split(',').map(s => s.trim()).filter(Boolean);
+    });
+
+    // ── Idle Settings ──────────────────────────────────
+    function renderIdleSettings() {
+      if (config.idleEnabled) idleToggle.classList.add('on');
+      else idleToggle.classList.remove('on');
+      idleToggle.onclick = () => {
+        config.idleEnabled = !config.idleEnabled;
+        if (config.idleEnabled) idleToggle.classList.add('on');
+        else idleToggle.classList.remove('on');
+      };
+
+      idleEditorList.innerHTML = '';
+      if (!config.idleMessages || config.idleMessages.length === 0) {
+        idleEditorList.innerHTML = '<div class="empty-state">暂无闲置消息，点击下方添加</div>';
+        return;
+      }
+      config.idleMessages.forEach((msg, idx) => {
+        const item = document.createElement('div');
+        item.className = 'editable-item';
+        item.innerHTML = `
+          <div class="row">
+            <span class="tag">消息 ${idx + 1}</span>
+            <button class="btn btn-danger btn-sm btn-icon remove-idle-btn" data-idx="${idx}" title="删除">✕</button>
+          </div>
+          <div class="row">
+            <span style="font-size:11px;color:var(--text2);min-width:40px">内容:</span>
+            <input style="flex:2;min-width:120px" value="${escapeHtml(msg.message)}" placeholder="闲置消息内容" data-idx="${idx}" data-field="message">
+            <span style="font-size:11px;color:var(--text2);min-width:40px">间隔:</span>
+            <input style="flex:1;min-width:80px" value="${msg.interval}" placeholder="毫秒" type="number" data-idx="${idx}" data-field="interval">
+          </div>
+        `;
+        item.querySelectorAll('input').forEach(input => {
+          input.addEventListener('input', () => {
+            const i = parseInt(input.dataset.idx);
+            const field = input.dataset.field;
+            if (field === 'message') config.idleMessages[i].message = input.value;
+            else if (field === 'interval') config.idleMessages[i].interval = parseInt(input.value) || 30000;
+          });
+        });
+        item.querySelector('.remove-idle-btn').addEventListener('click', () => {
+          config.idleMessages.splice(idx, 1);
+          renderIdleSettings();
+        });
+        idleEditorList.appendChild(item);
+      });
+    }
+
+    addIdleMsg.addEventListener('click', () => {
+      if (!config.idleMessages) config.idleMessages = [];
+      config.idleMessages.push({ message: '新消息', interval: 60000 });
+      renderIdleSettings();
+    });
+
+    // ── Save ───────────────────────────────────────────
+    saveBtn.addEventListener('click', async () => {
+      config.petSize = parseInt(sizeSlider.value);
+      config.moveSpeed = parseInt(speedSlider.value);
+      config.sleepAfterIdleSec = parseInt(sleepSlider.value);
+      const result = await api.saveConfig(config);
+      if (result.success) toast('设置已保存，桌宠已实时更新! ✨');
+      else toast('保存失败', true);
+    });
+
+    // ── Reset ──────────────────────────────────────────
+    resetBtn.addEventListener('click', async () => {
+      config = {
+        activeMedia: config.activeMedia,
+        stateMedias: { normal: '', playing: '', sleeping: '', happy: '', eating: '', angry: '' },
+        petSize: 200,
+        moveSpeed: 5,
+        sleepAfterIdleSec: 30,
+        interactionButtons: [
+          { label: '摸摸头', state: 'happy',   responses: ['好舒服~', '再摸摸嘛~', '嘿嘿嘿~'] },
+          { label: '喂零食', state: 'eating',  responses: ['好吃好吃!', '还有吗还有吗?', '汪! 太棒了~'] },
+          { label: '击掌',   state: 'playing', responses: ['耶! ✋', '配合满分!', '再来一次!'] }
+        ],
+        clickResponses: ['汪!', '呜~', '嘿嘿', '干嘛呀~', 'Hello!'],
+        idleMessages: [
+          { message: '你在干嘛呀?', interval: 60000 },
+          { message: '好无聊哦...', interval: 120000 },
+          { message: '带我出去玩吧~', interval: 180000 }
+        ],
+        idleEnabled: true
+      };
+      const result = await api.saveConfig(config);
+      if (result.success) { renderAll(); toast('已恢复默认设置!'); }
+    });
+
+    // ── IPC Listeners ──────────────────────────────────
+    api.onConfigUpdated((nc) => { config = nc; renderAll(); });
+    api.onMediaUpdated((list) => { mediaList = list; renderAll(); });
+
+    // ── Helper ─────────────────────────────────────────
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // ── Keyboard ───────────────────────────────────────
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveBtn.click(); }
+    });
+
+    init();
+  })();
+</script>
+</body>
+</html>

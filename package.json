@@ -1,0 +1,56 @@
+{
+  "name": "shanhailing-pet",
+  "version": "1.0.0",
+  "description": "山海经宠物桌面精灵 - Desktop Pet Companion",
+  "main": "main.js",
+  "author": "ShanHaiLing",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron . --no-sandbox",
+    "dev": "electron . --dev",
+    "dist": "electron-builder",
+    "dist:win": "set \"ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/\" && electron-builder --win"
+  },
+  "build": {
+    "appId": "com.shanhailing.pet",
+    "productName": "山海经宠物",
+    "icon": "icon.ico",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "pet.html",
+      "panel.html",
+      "preload.js",
+      "icon.png",
+      "icon.ico"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "山海经宠物",
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico",
+      "installerHeaderIcon": "icon.ico",
+      "deleteAppDataOnUninstall": false
+    }
+  },
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^26.15.3"
+  }
+}

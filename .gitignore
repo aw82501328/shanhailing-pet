@@ -1,0 +1,13 @@
+# Electron builder output
+dist/
+
+# Generated icon files
+icon.png
+icon.ico
+
+# Dependencies
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db

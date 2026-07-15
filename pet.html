@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>山海经 · 桌宠</title>
+<style>
+  :root {
+    --pet-size: 200px;
+    --bubble-bg: rgba(255, 255, 255, 0.92);
+    --bubble-text: #333;
+    --btn-bg: rgba(255, 255, 255, 0.9);
+    --btn-hover: #ff6b6b;
+    --btn-text: #555;
+    --accent: #6366f1;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: transparent !important;
+    user-select: none; -webkit-user-select: none;
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  }
+
+  .container {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: flex-end; position: relative; padding-bottom: 4px;
+    background: transparent !important;
+  }
+
+  .pet-area, #placeholder {
+    background: transparent !important;
+  }
+
+  /* ── Bubble ───────────────────── */
+  .bubble {
+    position: absolute; top: auto; bottom: calc(var(--pet-size) + 38px); left: 50%; transform: translateX(-50%);
+    background: var(--bubble-bg); color: var(--bubble-text);
+    padding: 8px 16px; border-radius: 18px; font-size: 14px; font-weight: 500;
+    white-space: nowrap; pointer-events: none; opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.12); z-index: 10;
+    max-width: 280px; overflow: hidden; text-overflow: ellipsis;
+  }
+  .bubble::after {
+    content: ''; position: absolute; bottom: -8px; left: 50%;
+    transform: translateX(-50%);
+    border-left: 8px solid transparent; border-right: 8px solid transparent;
+    border-top: 10px solid var(--bubble-bg);
+  }
+  .bubble.sleep-bubble { background: rgba(200, 210, 240, 0.92); font-style: italic; }
+  .bubble.sleep-bubble::after { border-top-color: rgba(200, 210, 240, 0.92); }
+  .bubble.show {
+    opacity: 1;
+    animation: bubblePop 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  }
+  @keyframes bubblePop {
+    0% { transform: translateX(-50%) scale(0.5); opacity: 0; }
+    100% { transform: translateX(-50%) scale(1); opacity: 1; }
+  }
+
+  /* ── Pet Area ──────────────── */
+  .pet-area {
+    -webkit-app-region: no-drag; position: relative; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #pet-image, #pet-video {
+    width: var(--pet-size); height: var(--pet-size);
+    object-fit: contain; display: none; pointer-events: none;
+    background: transparent !important;
+  }
+  #pet-video { background: transparent !important; }
+  #pet-video::-webkit-media-controls-panel { display: none !important; }
+  #placeholder {
+    width: var(--pet-size); height: var(--pet-size);
+    display: flex; align-items: center; justify-content: center;
+    transition: filter 0.5s;
+  }
+
+  /* ── State badge (inside pet-area) ── */
+  .state-badge {
+    position: absolute; top: -4px; left: 50%; transform: translateX(-50%);
+    background: var(--accent); color: #fff; font-size: 10px; font-weight: 600;
+    padding: 2px 10px; border-radius: 10px; z-index: 12;
+    pointer-events: none; opacity: 0; transition: opacity 0.3s;
+  }
+  .state-badge.visible { opacity: 1; }
+
+  /* ── ZZZ (inside pet-area) ─── */
+  .zzz-container {
+    position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+    pointer-events: none; z-index: 11;
+    display: none; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .zzz-item {
+    font-size: 16px; opacity: 0;
+    animation: zzzFloat 2.5s ease-in-out infinite;
+  }
+  .zzz-item:nth-child(1) { animation-delay: 0s; }
+  .zzz-item:nth-child(2) { animation-delay: 0.6s; font-size: 20px; }
+  .zzz-item:nth-child(3) { animation-delay: 1.2s; font-size: 24px; }
+  @keyframes zzzFloat {
+    0%   { opacity: 0; transform: translateY(0) scale(0.8); }
+    20%  { opacity: 0.9; }
+    70%  { opacity: 0.6; }
+    100% { opacity: 0; transform: translateY(-40px) scale(1.3); }
+  }
+
+  /* ── Idle dots (inside pet-area) ── */
+  .idle-dot {
+    position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 4px; opacity: 0; transition: opacity 0.4s ease; z-index: 5;
+  }
+  .idle-dot.show { opacity: 1; }
+  .idle-dot span {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(0,0,0,0.3);
+    animation: dotBounce 1.4s ease-in-out infinite;
+  }
+  .idle-dot span:nth-child(2) { animation-delay: 0.2s; }
+  .idle-dot span:nth-child(3) { animation-delay: 0.4s; }
+
+  /* ── Context Menu ────────────── */
+  .ctx-menu {
+    position: fixed; background: rgba(255,255,255,0.96);
+    border-radius: 10px; box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    padding: 6px 0; z-index: 999; display: none;
+    min-width: 150px; backdrop-filter: blur(10px);
+  }
+  .ctx-menu.show { display: block; }
+  .ctx-item {
+    padding: 9px 20px; font-size: 13px; cursor: pointer; color: #444;
+    border: none; background: none; width: 100%; text-align: left;
+    display: flex; align-items: center; gap: 8px; font-family: inherit;
+    transition: background 0.15s ease;
+  }
+  .ctx-item:hover { background: rgba(99,102,241,0.1); color: var(--accent); }
+  .ctx-divider { height: 1px; background: rgba(0,0,0,0.06); margin: 4px 0; }
+
+  /* ── Animations ──────────────── */
+  @keyframes shake {
+    0%,100% { transform: rotate(0deg); }
+    25% { transform: rotate(-8deg); }
+    75% { transform: rotate(8deg); }
+  }
+  @keyframes bounce {
+    0%,100% { transform: translateY(0); }
+    30% { transform: translateY(-20px); }
+    50% { transform: translateY(0); }
+    70% { transform: translateY(-10px); }
+  }
+  @keyframes wiggle {
+    0%,100% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(-5deg) scale(1.06); }
+    75% { transform: rotate(5deg) scale(1.06); }
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(0.8); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+  @keyframes pulse {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-7px); }
+  }
+  @keyframes sleepBreathe {
+    0%,100% { transform: scale(1) translateY(0); }
+    50% { transform: scale(0.96) translateY(3px); }
+  }
+  .anim-shake  { animation: shake 0.5s ease; }
+  .anim-bounce { animation: bounce 0.6s ease; }
+  .anim-wiggle { animation: wiggle 0.5s ease; }
+  .anim-spin   { animation: spin 0.7s ease; }
+  .anim-pulse  { animation: pulse 0.4s ease; }
+  .anim-float  { animation: float 2.5s ease-in-out infinite; }
+  .anim-sleep  { animation: sleepBreathe 3.5s ease-in-out infinite; }
+
+  @keyframes dotBounce {
+    0%,80%,100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1.2); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container" id="container">
+  <div class="bubble" id="bubble"></div>
+
+  <div class="pet-area" id="petArea" title="点击互动 | 右键菜单 | 拖拽移动">
+    <!-- State indicator overlay -->
+    <div class="zzz-container" id="zzzContainer">
+      <span class="zzz-item">💤</span>
+      <span class="zzz-item">💤</span>
+      <span class="zzz-item">💤</span>
+    </div>
+    <div class="state-badge" id="stateBadge"></div>
+
+    <!-- Pet content -->
+    <img id="pet-image" alt="pet" style="background:transparent">
+    <video id="pet-video" muted loop playsinline style="background:transparent"></video>
+    <div id="placeholder" style="background:transparent">
+      <svg id="placeholder-svg" viewBox="0 0 200 240" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <filter id="shadow" x="-20%" y="-10%" width="140%" height="130%">
+            <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#00000033"/>
+          </filter>
+          <radialGradient id="bodyGrad" cx="45%" cy="40%">
+            <stop offset="0%" stop-color="#FFF5EE"/>
+            <stop offset="60%" stop-color="#FFE4C4"/>
+            <stop offset="100%" stop-color="#F0C090"/>
+          </radialGradient>
+          <radialGradient id="headGrad" cx="45%" cy="35%">
+            <stop offset="0%" stop-color="#FFFFFF"/>
+            <stop offset="50%" stop-color="#FFF5EE"/>
+            <stop offset="100%" stop-color="#FFE4C4"/>
+          </radialGradient>
+          <radialGradient id="earInnerL" cx="40%" cy="40%">
+            <stop offset="0%" stop-color="#FFD1DC"/>
+            <stop offset="100%" stop-color="#F0A0B0"/>
+          </radialGradient>
+          <radialGradient id="earInnerR" cx="60%" cy="40%">
+            <stop offset="0%" stop-color="#FFD1DC"/>
+            <stop offset="100%" stop-color="#F0A0B0"/>
+          </radialGradient>
+          <radialGradient id="cheekL" cx="40%" cy="45%">
+            <stop offset="0%" stop-color="#FFB6C1" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#FFB6C1" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="cheekR" cx="60%" cy="45%">
+            <stop offset="0%" stop-color="#FFB6C1" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#FFB6C1" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="pawGrad" cx="50%" cy="30%">
+            <stop offset="0%" stop-color="#FFF5EE"/>
+            <stop offset="100%" stop-color="#E8C498"/>
+          </radialGradient>
+          <linearGradient id="tailGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFE4C4"/>
+            <stop offset="60%" stop-color="#F0C090"/>
+            <stop offset="100%" stop-color="#FFB6C1"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Tail -->
+        <path d="M 148 175 Q 195 165 185 130 Q 180 110 170 100" fill="none" stroke="url(#tailGrad)" stroke-width="16" stroke-linecap="round" filter="url(#shadow)"/>
+        <circle cx="170" cy="98" r="10" fill="#FFB6C1"/>
+
+        <!-- Body -->
+        <ellipse cx="100" cy="175" rx="62" ry="50" fill="url(#bodyGrad)" filter="url(#shadow)"/>
+
+        <!-- Belly highlight -->
+        <ellipse cx="100" cy="182" rx="38" ry="32" fill="#FFFFFF" opacity="0.5"/>
+
+        <!-- Left paw -->
+        <ellipse cx="58" cy="208" rx="20" ry="12" fill="url(#pawGrad)" filter="url(#shadow)"/>
+        <ellipse cx="55" cy="206" rx="5" ry="4" fill="#F0C090" opacity="0.5"/>
+        <ellipse cx="63" cy="206" rx="5" ry="4" fill="#F0C090" opacity="0.5"/>
+        <ellipse cx="58" cy="208" rx="4" ry="3.5" fill="#E8C498" opacity="0.6"/>
+
+        <!-- Right paw -->
+        <ellipse cx="142" cy="208" rx="20" ry="12" fill="url(#pawGrad)" filter="url(#shadow)"/>
+        <ellipse cx="139" cy="206" rx="5" ry="4" fill="#F0C090" opacity="0.5"/>
+        <ellipse cx="147" cy="206" rx="5" ry="4" fill="#F0C090" opacity="0.5"/>
+        <ellipse cx="142" cy="208" rx="4" ry="3.5" fill="#E8C498" opacity="0.6"/>
+
+        <!-- Head -->
+        <circle cx="100" cy="105" r="52" fill="url(#headGrad)" filter="url(#shadow)"/>
+
+        <!-- Left ear (outer) -->
+        <path d="M 62 75 Q 35 30 55 20 Q 70 14 68 55 Z" fill="#F0C090" filter="url(#shadow)"/>
+        <!-- Left ear (inner) -->
+        <path d="M 62 70 Q 42 35 57 26 Q 67 22 66 55 Z" fill="url(#earInnerL)"/>
+
+        <!-- Right ear (outer) -->
+        <path d="M 138 75 Q 165 30 145 20 Q 130 14 132 55 Z" fill="#F0C090" filter="url(#shadow)"/>
+        <!-- Right ear (inner) -->
+        <path d="M 138 70 Q 158 35 143 26 Q 133 22 134 55 Z" fill="url(#earInnerR)"/>
+
+        <!-- Face white area -->
+        <ellipse cx="100" cy="118" rx="36" ry="28" fill="#FFFFFF" opacity="0.7"/>
+
+        <!-- Left cheek blush -->
+        <ellipse cx="62" cy="118" rx="14" ry="10" fill="url(#cheekL)"/>
+
+        <!-- Right cheek blush -->
+        <ellipse cx="138" cy="118" rx="14" ry="10" fill="url(#cheekR)"/>
+
+        <!-- Left eye -->
+        <ellipse cx="80" cy="102" rx="12" ry="13" fill="#FFFFFF"/>
+        <ellipse cx="82" cy="102" rx="8" ry="9" fill="#2C1810"/>
+        <ellipse cx="84" cy="98" rx="4" ry="4" fill="#FFFFFF"/>
+        <ellipse cx="80" cy="105" rx="2" ry="2" fill="#FFFFFF"/>
+
+        <!-- Right eye -->
+        <ellipse cx="120" cy="102" rx="12" ry="13" fill="#FFFFFF"/>
+        <ellipse cx="118" cy="102" rx="8" ry="9" fill="#2C1810"/>
+        <ellipse cx="120" cy="98" rx="4" ry="4" fill="#FFFFFF"/>
+        <ellipse cx="116" cy="105" rx="2" ry="2" fill="#FFFFFF"/>
+
+        <!-- Nose -->
+        <ellipse cx="100" cy="112" rx="6" ry="4.5" fill="#F4A0A0"/>
+        <ellipse cx="98" cy="111" rx="2" ry="1.5" fill="#FFFFFF" opacity="0.5"/>
+
+        <!-- Mouth -->
+        <path d="M 94 118 Q 100 128 106 118" fill="none" stroke="#D08080" stroke-width="2" stroke-linecap="round"/>
+
+        <!-- Whiskers Left -->
+        <line x1="55" y1="110" x2="78" y2="114" stroke="#D4A090" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="54" y1="117" x2="76" y2="117" stroke="#D4A090" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="55" y1="124" x2="78" y2="120" stroke="#D4A090" stroke-width="1.2" stroke-linecap="round"/>
+
+        <!-- Whiskers Right -->
+        <line x1="145" y1="110" x2="122" y2="114" stroke="#D4A090" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="146" y1="117" x2="124" y2="117" stroke="#D4A090" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="145" y1="124" x2="122" y2="120" stroke="#D4A090" stroke-width="1.2" stroke-linecap="round"/>
+
+        <!-- Sparkles decoration -->
+        <text x="25" y="55" font-size="14" fill="#FFD700" opacity="0.7">✦</text>
+        <text x="165" y="50" font-size="10" fill="#FFD700" opacity="0.5">✦</text>
+      </svg>
+    </div>
+
+    <div class="idle-dot" id="idleDots">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+
+</div>
+
+<div class="ctx-menu" id="ctxMenu">
+  <div id="ctxInteractionBtns"></div>
+  <div class="ctx-divider" id="ctxIntDivider" style="display:none"></div>
+  <button class="ctx-item" data-action="panel">⚙ 控制面板</button>
+  <button class="ctx-item" data-action="interact">💬 互动一下</button>
+  <button class="ctx-item" data-action="wake">🔔 唤醒宠物</button>
+  <div class="ctx-divider"></div>
+  <button class="ctx-item" data-action="hide">👻 暂时隐藏</button>
+  <button class="ctx-item" data-action="quit">❌ 退出桌宠</button>
+</div>
+
+<script>
+  (function() {
+    const api = window.petAPI;
+
+    // ── DOM ───────────────────────────────────────────
+    const container   = document.getElementById('container');
+    const bubble      = document.getElementById('bubble');
+    const petArea     = document.getElementById('petArea');
+    const petImage    = document.getElementById('pet-image');
+    const petVideo    = document.getElementById('pet-video');
+    const placeholder = document.getElementById('placeholder');
+    const ctxMenu     = document.getElementById('ctxMenu');
+    const ctxInteractionBtns = document.getElementById('ctxInteractionBtns');
+    const ctxIntDivider = document.getElementById('ctxIntDivider');
+    const idleDots    = document.getElementById('idleDots');
+    const stateBadge  = document.getElementById('stateBadge');
+    const zzzContainer = document.getElementById('zzzContainer');
+    const placeholderSvg = document.getElementById('placeholder-svg');
+
+    // ── State Machine Constants ───────────────────────
+    const STATE_DURATIONS = {
+      normal: Infinity, playing: 3000, sleeping: Infinity,
+      happy: 3000, eating: 8000, angry: 4000
+    };
+    const STATE_ANIMATIONS = {
+      normal: 'anim-float', playing: 'anim-bounce', sleeping: 'anim-sleep',
+      happy: 'anim-wiggle', eating: 'anim-pulse', angry: 'anim-shake'
+    };
+
+    let config         = null;
+    let petStates      = null;
+    let currentState   = 'normal';
+    let mediaList      = [];
+    let bubbleTimer    = null;
+    let stateTimer     = null;
+    let idleTimer      = null;
+    let idleMsgTimer   = null;
+    let sleepTimer     = null;
+    let cooldown       = false;
+    let playMoveTimer  = null;
+
+    // ── setState ──────────────────────────────────────
+    async function setState(newState, source) {
+      if (newState === currentState && newState !== 'sleeping') return;
+
+      const wasPlaying = currentState === 'playing';
+      const targetState = newState;
+
+      currentState = newState;
+      if (stateTimer) { clearTimeout(stateTimer); stateTimer = null; }
+
+      // Stop play movement if leaving playing state
+      if (wasPlaying && targetState !== 'playing') stopPlayMovement();
+
+      // Clear all animation classes
+      Object.values(STATE_ANIMATIONS).forEach(c => petArea.classList.remove(c));
+      const animCls = STATE_ANIMATIONS[targetState];
+      if (animCls) petArea.classList.add(animCls);
+
+      // Visual indicators
+      zzzContainer.style.display = 'none';
+      idleDots.classList.remove('show');
+
+      if (petStates && petStates[targetState] && targetState !== 'normal') {
+        stateBadge.textContent = petStates[targetState].icon + ' ' + petStates[targetState].label;
+        stateBadge.classList.add('visible');
+        setTimeout(() => stateBadge.classList.remove('visible'), 2000);
+      }
+
+      await loadStateMedia(targetState);
+
+      // Race condition guard: state may have changed during async load
+      if (currentState !== targetState) return;
+
+      // Auto-return to normal (except playing and sleeping)
+      if (targetState !== 'normal' && targetState !== 'sleeping' && targetState !== 'playing') {
+        const dur = STATE_DURATIONS[targetState] || 3000;
+        stateTimer = setTimeout(() => {
+          setState('normal', 'auto');
+          resetIdleTimer();
+        }, dur);
+      }
+
+      if (targetState === 'sleeping') scheduleSleepBubble();
+
+      if (targetState !== 'normal' && targetState !== 'sleeping') {
+        clearIdleTimers();
+      }
+
+      // Start play movement when entering playing state
+      if (targetState === 'playing') startPlayMovement();
+    }
+
+    // ── Play Movement: slowly follow mouse ────────────
+    let winW = 320, winH = 364;
+
+    function startPlayMovement() {
+      stopPlayMovement();
+      // Pause 1 second, then slowly follow the mouse
+      playMoveTimer = setTimeout(doPlayStep, 1000);
+    }
+
+    function doPlayStep() {
+      if (currentState !== 'playing') return;
+
+      Promise.all([
+        api.getWindowPos(),
+        api.getCursorPos()
+      ]).then(([winPos, cursorPos]) => {
+        if (!Array.isArray(winPos) || winPos.length < 2) return;
+        if (!Array.isArray(cursorPos) || cursorPos.length < 2) return;
+
+        const x = Number(winPos[0]), y = Number(winPos[1]);
+        const cursorX = Number(cursorPos[0]), cursorY = Number(cursorPos[1]);
+        if (!isFinite(x) || !isFinite(y) || !isFinite(cursorX) || !isFinite(cursorY)) return;
+
+        // Target: center the pet on the mouse cursor
+        const targetX = cursorX - winW / 2;
+        const targetY = cursorY - winH / 2;
+
+        const distX = targetX - x;
+        const distY = targetY - y;
+
+        // Slow easing: move based on configured speed (1=slowest, 10=fastest)
+        const speed = config?.moveSpeed || 5;
+        const ease = Math.min(speed * 0.016, 1);
+        let newX = x + distX * ease;
+        let newY = y + distY * ease;
+
+        if (!isFinite(newX) || !isFinite(newY)) return;
+
+        api.moveWindowTo([Math.round(newX), Math.round(newY)]);
+        // ~30fps update rate for smooth slow movement
+        playMoveTimer = setTimeout(doPlayStep, 33);
+      }).catch(() => {
+        playMoveTimer = setTimeout(doPlayStep, 50);
+      });
+    }
+
+    function stopPlayMovement() {
+      if (playMoveTimer) { clearTimeout(playMoveTimer); playMoveTimer = null; }
+    }
+
+    async function loadStateMedia(state) {
+      const filename = config?.stateMedias?.[state] || config?.activeMedia || null;
+
+      if (!filename) { showPlaceholder(); return; }
+
+      const mediaPath = await api.getMediaPath(filename);
+      if (!mediaPath) { showPlaceholder(); return; }
+
+      const ext = filename.split('.').pop().toLowerCase();
+      const isVideo = ['webm','mp4','mov'].includes(ext);
+      const isImage = ['webp','gif','png','jpg','jpeg','apng'].includes(ext);
+
+      if (isVideo) {
+        petImage.style.display = 'none';
+        petVideo.style.display = 'block';
+        petVideo.style.background = 'transparent';
+        placeholder.style.display = 'none';
+        petVideo.src = 'file://' + mediaPath;
+        petVideo.play().catch(() => {});
+        if (state === 'sleeping') {
+          setTimeout(() => { if (currentState === 'sleeping') petVideo.pause(); }, 2000);
+        }
+      } else if (isImage) {
+        petVideo.style.display = 'none'; petVideo.src = '';
+        petImage.style.display = 'block';
+        petImage.style.background = 'transparent';
+        placeholder.style.display = 'none';
+        petImage.src = 'file://' + mediaPath;
+      } else {
+        showPlaceholder();
+      }
+    }
+
+    function showPlaceholder() {
+      petImage.style.display = 'none';
+      petVideo.style.display = 'none'; petVideo.src = '';
+      placeholder.style.display = 'flex';
+      placeholder.style.filter = (currentState === 'sleeping') ? 'brightness(0.8) saturate(0.5)' : 'none';
+    }
+
+    // ── Sleep bubble ──────────────────────────────────
+    function scheduleSleepBubble() {
+      if (currentState !== 'sleeping') return;
+      const msgs = ['zzZ...', '呼...呼...', 'Zzz...', '😴', '好困...zzZ'];
+      showBubble(msgs[Math.floor(Math.random() * msgs.length)], 2500, true);
+      if (stateTimer) clearTimeout(stateTimer);
+      stateTimer = setTimeout(scheduleSleepBubble, 8000 + Math.random() * 4000);
+    }
+
+    // ── Bubble ────────────────────────────────────────
+    function showBubble(text, duration, isSleep) {
+      if (bubbleTimer) clearTimeout(bubbleTimer);
+      bubble.textContent = text;
+      bubble.classList.remove('sleep-bubble');
+      if (isSleep) bubble.classList.add('sleep-bubble');
+      bubble.classList.add('show');
+      bubbleTimer = setTimeout(() => {
+        bubble.classList.remove('show', 'sleep-bubble');
+        bubbleTimer = null;
+      }, duration);
+    }
+
+    // ── Pet-Area: Drag vs Click ────────────────────────
+    let petDrag = false;
+    let petDown = false;
+    let petDragLoop = null;
+    let petStartClickX = 0;
+    let petStartClickY = 0;
+    let petLastCursorX = 0;
+    let petLastCursorY = 0;
+    const DRAG_THRESHOLD = 4; // pixels moved before it counts as a drag
+
+    petArea.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      petDown = true;
+      petDrag = false;
+      petStartClickX = e.screenX;
+      petStartClickY = e.screenY;
+      petLastCursorX = e.screenX;
+      petLastCursorY = e.screenY;
+      e.stopPropagation();
+      startPetDragLoop();
+    });
+
+    async function startPetDragLoop() {
+      const step = async () => {
+        if (!petDown) return;
+
+        try {
+          const pos = await api.getCursorPos();
+          if (!Array.isArray(pos) || pos.length < 2) {
+            petDragLoop = requestAnimationFrame(step);
+            return;
+          }
+          const cx = Number(pos[0]), cy = Number(pos[1]);
+          if (!isFinite(cx) || !isFinite(cy)) {
+            petDragLoop = requestAnimationFrame(step);
+            return;
+          }
+          const totalDx = cx - petStartClickX;
+          const totalDy = cy - petStartClickY;
+
+          if (!petDrag && (Math.abs(totalDx) > DRAG_THRESHOLD || Math.abs(totalDy) > DRAG_THRESHOLD)) {
+            petDrag = true;
+          }
+
+          if (petDrag) {
+            const dx = cx - petLastCursorX;
+            const dy = cy - petLastCursorY;
+            if (isFinite(dx) && isFinite(dy)) {
+              api.moveWindow([Math.round(dx), Math.round(dy)]);
+            }
+          }
+
+          petLastCursorX = cx;
+          petLastCursorY = cy;
+          petDragLoop = requestAnimationFrame(step);
+        } catch(e) {
+          petDragLoop = requestAnimationFrame(step);
+        }
+      };
+      petDragLoop = requestAnimationFrame(step);
+    }
+
+    window.addEventListener('mouseup', async () => {
+      if (!petDown) return;
+      petDown = false;
+      if (petDragLoop) { cancelAnimationFrame(petDragLoop); petDragLoop = null; }
+
+      if (!petDrag) {
+        // It was a click — trigger interaction
+        if (cooldown) return;
+        cooldown = true; setTimeout(() => { cooldown = false; }, 600);
+
+        if (currentState === 'sleeping') {
+          wakeFromSleep();
+          setTimeout(doClickInteract, 400);
+        } else {
+          doClickInteract();
+        }
+      }
+    });
+
+    function doClickInteract() {
+      if (config?.clickResponses?.length) {
+        const msg = config.clickResponses[Math.floor(Math.random() * config.clickResponses.length)];
+        showBubble(msg, 2200, false);
+      }
+      setState('playing', 'click');
+      resetIdleTimer();
+    }
+
+    // ── Button Interaction ────────────────────────────
+    function triggerInteraction(btnDef) {
+      if (cooldown) return;
+      cooldown = true; setTimeout(() => { cooldown = false; }, 600);
+
+      if (currentState === 'sleeping') {
+        wakeFromSleep();
+        setTimeout(() => doBtnInteract(btnDef), 400);
+      } else {
+        doBtnInteract(btnDef);
+      }
+    }
+
+    function doBtnInteract(btnDef) {
+      if (btnDef.responses?.length) {
+        showBubble(btnDef.responses[Math.floor(Math.random() * btnDef.responses.length)], 2500, false);
+      }
+      setState(btnDef.state || 'playing', 'btn:' + btnDef.label);
+      resetIdleTimer();
+    }
+
+    function wakeFromSleep() {
+      setState('normal', 'wake');
+      showBubble('嗯...醒啦! 😪', 2000, false);
+    }
+
+    // ── Render interaction buttons into context menu ────
+    function renderInteractionButtons() {
+      ctxInteractionBtns.innerHTML = '';
+      ctxIntDivider.style.display = 'none';
+      if (!config?.interactionButtons) return;
+      config.interactionButtons.forEach((btn, i) => {
+        const el = document.createElement('button');
+        el.className = 'ctx-item';
+        el.dataset.action = 'btn-' + i;
+        el.textContent = '🔹 ' + btn.label;
+        ctxInteractionBtns.appendChild(el);
+      });
+      if (config.interactionButtons.length > 0) {
+        ctxIntDivider.style.display = '';
+      }
+    }
+
+    // ── Idle / Sleep Timers ───────────────────────────
+    function clearIdleTimers() {
+      [idleTimer, sleepTimer, idleMsgTimer].forEach(t => { if (t) clearTimeout(t); });
+      idleTimer = sleepTimer = idleMsgTimer = null;
+      idleDots.classList.remove('show');
+    }
+
+    function resetIdleTimer() {
+      clearIdleTimers();
+      if (!config?.idleEnabled) return;
+
+      idleTimer = setTimeout(() => idleDots.classList.add('show'), 10000);
+
+      const sleepSec = config.sleepAfterIdleSec || 30;
+      // Don't auto-sleep while the pet is playing (following mouse)
+      if (sleepSec > 0 && currentState !== 'playing') {
+        sleepTimer = setTimeout(() => {
+          if (currentState !== 'sleeping') {
+            setState('sleeping', 'idle');
+            showBubble('zzZ... 好困呀...', 3000, true);
+          }
+        }, sleepSec * 1000);
+      }
+
+      scheduleIdleMessage();
+    }
+
+    function scheduleIdleMessage() {
+      if (!config?.idleMessages?.length) return;
+      const msg = config.idleMessages[Math.floor(Math.random() * config.idleMessages.length)];
+      idleMsgTimer = setTimeout(() => {
+        if (currentState === 'normal') showBubble(msg.message, 3000, false);
+        scheduleIdleMessage();
+      }, msg.interval || 30000);
+    }
+
+    // ── Context Menu ──────────────────────────────────
+    document.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      // Right-click during playing: cancel the movement
+      if (currentState === 'playing') {
+        stopPlayMovement();
+        setState('normal', 'cancel');
+        resetIdleTimer();
+        showBubble('不追了~', 1500, false);
+        return;
+      }
+      ctxMenu.style.left = Math.min(e.clientX, window.innerWidth - 160) + 'px';
+      ctxMenu.style.top = Math.min(e.clientY, window.innerHeight - 240) + 'px';
+      ctxMenu.classList.add('show');
+    });
+    document.addEventListener('click', () => ctxMenu.classList.remove('show'));
+
+    ctxMenu.addEventListener('click', (e) => {
+      const action = e.target.closest('[data-action]')?.dataset.action;
+      if (!action) return;
+      ctxMenu.classList.remove('show');
+
+      // Check if it's an interaction button
+      if (action.startsWith('btn-')) {
+        const idx = parseInt(action.slice(4));
+        if (config?.interactionButtons?.[idx]) {
+          triggerInteraction(config.interactionButtons[idx]);
+        }
+        return;
+      }
+
+      switch (action) {
+        case 'panel': api.openPanel(); break;
+        case 'interact':
+          if (currentState === 'sleeping') wakeFromSleep();
+          if (config?.clickResponses?.length)
+            showBubble(config.clickResponses[Math.floor(Math.random() * config.clickResponses.length)], 2200, false);
+          setState('playing', 'menu'); resetIdleTimer(); break;
+        case 'wake':
+          if (currentState === 'sleeping') wakeFromSleep();
+          resetIdleTimer(); break;
+        case 'hide':
+          container.style.opacity = '0';
+          setTimeout(() => { container.style.opacity = '1'; }, 5000);
+          showBubble('我藏起来啦~ 5秒后回来!', 5000, false); break;
+        case 'quit':
+          showBubble('再见啦... 👋', 2000, false);
+          setTimeout(() => window.close(), 2000); break;
+      }
+    });
+
+    // ── Manual Window Drag (replaces unreliable -webkit-app-region) ──
+    let dragging = false;
+    let containerDragLoop = null;
+    let lastDragCursorX = 0;
+    let lastDragCursorY = 0;
+    const CONTAINER_DRAG_THRESHOLD = 3;
+
+    container.addEventListener('mousedown', (e) => {
+      // Only start drag on left button, and not on interactive children
+      if (e.button !== 0) return;
+      const tag = e.target.tagName.toLowerCase();
+      if (tag === 'button' || tag === 'input' || tag === 'select' || tag === 'textarea') return;
+      if (petArea.contains(e.target)) return;
+
+      dragging = true;
+      lastDragCursorX = e.screenX;
+      lastDragCursorY = e.screenY;
+      startContainerDragLoop();
+    });
+
+    async function startContainerDragLoop() {
+      const step = async () => {
+        if (!dragging) return;
+
+        try {
+          const pos = await api.getCursorPos();
+          if (!Array.isArray(pos) || pos.length < 2) {
+            containerDragLoop = requestAnimationFrame(step);
+            return;
+          }
+          const cx = Number(pos[0]), cy = Number(pos[1]);
+          if (!isFinite(cx) || !isFinite(cy)) {
+            containerDragLoop = requestAnimationFrame(step);
+            return;
+          }
+          const dx = cx - lastDragCursorX;
+          const dy = cy - lastDragCursorY;
+          if (isFinite(dx) && isFinite(dy) && (Math.abs(dx) >= CONTAINER_DRAG_THRESHOLD || Math.abs(dy) >= CONTAINER_DRAG_THRESHOLD)) {
+            api.moveWindow([Math.round(dx), Math.round(dy)]);
+          }
+          lastDragCursorX = cx;
+          lastDragCursorY = cy;
+          containerDragLoop = requestAnimationFrame(step);
+        } catch(e) {
+          containerDragLoop = requestAnimationFrame(step);
+        }
+      };
+      containerDragLoop = requestAnimationFrame(step);
+    }
+
+    window.addEventListener('mouseup', () => {
+      if (dragging) {
+        dragging = false;
+        if (containerDragLoop) { cancelAnimationFrame(containerDragLoop); containerDragLoop = null; }
+      }
+    });
+
+    // ── Init ──────────────────────────────────────────
+    async function init() {
+      try {
+        config = await api.getConfig();
+        mediaList = await api.getMediaList();
+        petStates = await api.getPetStates();
+        applyConfig();
+        renderInteractionButtons();
+        winW = (config?.petSize || 200) + 120;
+        winH = winW + 44;
+        await setState('normal', 'init');
+        resetIdleTimer();
+      } catch (e) {
+        showBubble('你好呀~ 我是山海经桌宠! 🐕', 3000, false);
+        petArea.classList.add('anim-float');
+      }
+    }
+
+    function applyConfig() {
+      if (!config) return;
+      document.documentElement.style.setProperty('--pet-size', config.petSize + 'px');
+    }
+
+    // ── IPC Listeners ─────────────────────────────────
+    api.onConfigUpdated(async (nc) => {
+      config = nc; applyConfig(); renderInteractionButtons();
+      winW = (config?.petSize || 200) + 120;
+      winH = winW + 44;
+      await loadStateMedia(currentState); resetIdleTimer();
+    });
+    api.onMediaUpdated((list) => { mediaList = list; });
+
+    // ── Shortcut: Ctrl+Shift+S = force sleep ──────────
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+        e.preventDefault();
+        if (currentState !== 'sleeping') {
+          setState('sleeping', 'shortcut');
+          showBubble('强制午休...zzZ', 3000, true);
+        }
+      }
+    });
+
+    init();
+
+    setTimeout(async () => {
+      const c = await api.getConfig();
+      const hasMedia = c.activeMedia || (c.stateMedias && Object.values(c.stateMedias).some(v => v));
+      if (!hasMedia) showBubble('欢迎! 👋 右键或点⚙上传素材吧~', 5000, false);
+    }, 800);
+
+  })();
+</script>
+</body>
+</html>
