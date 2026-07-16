@@ -12,12 +12,12 @@ const CONFIG_PATH = path.join(USER_DATA, 'config.json');
 
 // ─── State Definitions (predefined, always available) ────
 const PET_STATES = {
-  normal:   { label: '正常待机', icon: '🐕', anim: 'float',  desc: '默认闲置状态，轻缓浮动' },
-  playing:  { label: '玩耍互动', icon: '🎾', anim: 'bounce', desc: '点击或互动时显示的活泼状态' },
-  sleeping: { label: '睡觉休息', icon: '💤', anim: 'sleep',  desc: '长时间无操作后自动进入' },
-  happy:    { label: '开心撒娇', icon: '💕', anim: 'wiggle', desc: '被抚摸时显示的开心状态' },
-  eating:   { label: '进食干饭', icon: '🍖', anim: 'pulse',  desc: '喂零食时显示的进食状态' },
-  angry:    { label: '生气炸毛', icon: '💢', anim: 'shake',  desc: '可选：反复戳弄后的生气状态' }
+  state1: { label: '动作1', icon: '①', anim: 'float',  desc: '默认动作' },
+  state2: { label: '动作2', icon: '②', anim: 'bounce', desc: '点击或互动时显示' },
+  state3: { label: '动作3', icon: '③', anim: 'sleep',  desc: '长时间无操作后自动进入' },
+  state4: { label: '动作4', icon: '④', anim: 'wiggle', desc: '被抚摸时显示' },
+  state5: { label: '动作5', icon: '⑤', anim: 'pulse',  desc: '喂零食时显示' },
+  state6: { label: '动作6', icon: '⑥', anim: 'shake',  desc: '反复戳弄后显示' }
 };
 
 // ─── Default Config ──────────────────────────────────────
@@ -27,18 +27,18 @@ const DEFAULT_CONFIG = {
 
   // State → media filename mapping. Empty string = use placeholder.
   stateMedias: {
-    normal: '',
-    playing: '',
-    sleeping: '',
-    happy: '',
-    eating: '',
-    angry: ''
+    state1: '',
+    state2: '',
+    state3: '',
+    state4: '',
+    state5: '',
+    state6: ''
   },
 
   interactionButtons: [
-    { label: '摸摸头', state: 'happy',   responses: ['好舒服~', '再摸摸嘛~', '嘿嘿嘿~'] },
-    { label: '喂零食', state: 'eating',  responses: ['好吃好吃!', '还有吗还有吗?', '汪! 太棒了~'] },
-    { label: '击掌',   state: 'playing', responses: ['耶! ✋', '配合满分!', '再来一次!'] }
+    { label: '摸头', state: 'state4', responses: ['好舒服~', '再摸摸嘛~', '嘿嘿嘿~'] },
+    { label: '喂食', state: 'state5', responses: ['好吃好吃!', '还有吗还有吗?', '太棒了~'] },
+    { label: '击掌', state: 'state2', responses: ['耶!', '配合满分!', '再来一次!'] }
   ],
 
   clickResponses: ['汪!', '呜~', '嘿嘿', '干嘛呀~', 'Hello!'],
@@ -90,7 +90,7 @@ function loadConfig() {
       if (currentConfig.interactionButtons) {
         currentConfig.interactionButtons.forEach((btn, i) => {
           if (!btn.state) {
-            btn.state = i === 0 ? 'happy' : i === 1 ? 'eating' : 'playing';
+            btn.state = i === 0 ? 'state4' : i === 1 ? 'state5' : 'state2';
           }
         });
       }
@@ -204,7 +204,7 @@ function createPanelWindow() {
   panelWindow = new BrowserWindow({
     width: 560,
     height: 780,
-    title: '山海经 · 控制面板',
+    title: '桌面精灵 · 控制面板',
     autoHideMenuBar: true,
     resizable: true,
     minimizable: true,

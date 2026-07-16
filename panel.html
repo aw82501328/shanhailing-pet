@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>山海经 · 控制面板</title>
+<title>桌面精灵 · 控制面板</title>
 <style>
   :root {
     --bg: #0a0a0f;
@@ -402,7 +402,7 @@
 <div class="header">
   <div class="header-icon">🐕</div>
   <div>
-    <h1>山海经 · 桌宠控制面板</h1>
+    <h1>桌面精灵 · 控制面板</h1>
     <p>管理素材 · 状态映射 · 自定义互动</p>
   </div>
 </div>
@@ -444,7 +444,7 @@
 
   <!-- ═══ Section: 移动速度 ═══ -->
   <div class="section">
-    <div class="section-title"><span class="icon">🏃</span>玩耍移动速度</div>
+    <div class="section-title"><span class="icon">🏃</span>移动速度</div>
     <div class="slider-group">
       <span style="font-size:12px;color:var(--text2)">慢</span>
       <input type="range" id="speedSlider" min="1" max="10" value="5" step="1">
@@ -466,7 +466,7 @@
       <input type="range" id="sleepSlider" min="10" max="120" value="30" step="5">
       <span class="size-value" id="sleepValue">30秒</span>
     </div>
-    <div class="tip">无操作多少秒后自动进入「睡觉」状态。设为更大的值可延长活跃时间。</div>
+    <div class="tip">无操作多少秒后自动进入动作3。设为更大的值可延长活跃时间。</div>
   </div>
 
   <!-- ═══ Section: 互动按钮 ═══ -->
@@ -474,7 +474,7 @@
     <div class="section-title"><span class="icon">🔘</span>自定义互动按钮</div>
     <div class="editable-list" id="btnEditorList"></div>
     <button class="btn btn-accent btn-sm" id="addBtn" style="margin-top:12px">+ 添加互动按钮</button>
-    <div class="tip">「状态」决定点击后桌宠切换到哪个动作状态,「回应」用英文逗号 , 分隔多条随机回复</div>
+    <div class="tip">「状态」决定点击后桌宠切换到哪个动作，「回应」用英文逗号 , 分隔多条随机回复</div>
   </div>
 
   <!-- ═══ Section: 点击回应 ═══ -->
@@ -483,7 +483,7 @@
     <input type="text" id="clickResponsesInput"
            style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:13px;outline:none;font-family:inherit"
            placeholder="用英文逗号分隔，如：汪!, 呜~, 干嘛呀~">
-    <div class="tip">单击桌宠时随机弹出。点击行为本身会触发「玩耍」状态。</div>
+    <div class="tip">单击桌宠时随机弹出。点击行为本身会触活动作2。</div>
   </div>
 
   <!-- ═══ Section: 闲置消息 ═══ -->
@@ -491,7 +491,7 @@
     <div class="section-title"><span class="icon">⏰</span>闲置自动消息</div>
     <div class="editable-list" id="idleEditorList" style="margin-top:12px"></div>
     <button class="btn btn-accent btn-sm" id="addIdleMsg" style="margin-top:12px">+ 添加闲置消息</button>
-    <div class="tip">「间隔」单位毫秒（30000=30秒）。仅「正常」状态下弹出，睡觉时不显示。</div>
+    <div class="tip">「间隔」单位毫秒（30000=30秒）。仅动作1状态下弹出，动作3时不显示。</div>
   </div>
 
 </div>
@@ -808,7 +808,7 @@
 
     addBtn.addEventListener('click', () => {
       if (!config.interactionButtons) config.interactionButtons = [];
-      config.interactionButtons.push({ label: '新按钮', state: 'happy', responses: ['你好呀~', '真棒!'] });
+      config.interactionButtons.push({ label: '新按钮', state: 'state4', responses: ['你好呀~', '真棒!'] });
       renderInteractionButtons();
     });
 
@@ -886,14 +886,14 @@
     resetBtn.addEventListener('click', async () => {
       config = {
         activeMedia: config.activeMedia,
-        stateMedias: { normal: '', playing: '', sleeping: '', happy: '', eating: '', angry: '' },
+        stateMedias: { state1: '', state2: '', state3: '', state4: '', state5: '', state6: '' },
         petSize: 200,
         moveSpeed: 5,
         sleepAfterIdleSec: 30,
         interactionButtons: [
-          { label: '摸摸头', state: 'happy',   responses: ['好舒服~', '再摸摸嘛~', '嘿嘿嘿~'] },
-          { label: '喂零食', state: 'eating',  responses: ['好吃好吃!', '还有吗还有吗?', '汪! 太棒了~'] },
-          { label: '击掌',   state: 'playing', responses: ['耶! ✋', '配合满分!', '再来一次!'] }
+          { label: '摸头', state: 'state4', responses: ['好舒服~', '再摸摸嘛~', '嘿嘿嘿~'] },
+          { label: '喂食', state: 'state5', responses: ['好吃好吃!', '还有吗还有吗?', '太棒了~'] },
+          { label: '击掌', state: 'state2', responses: ['耶!', '配合满分!', '再来一次!'] }
         ],
         clickResponses: ['汪!', '呜~', '嘿嘿', '干嘛呀~', 'Hello!'],
         idleMessages: [

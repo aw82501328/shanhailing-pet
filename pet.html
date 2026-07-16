@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>山海经 · 桌宠</title>
+<title>桌面精灵</title>
 <style>
   :root {
     --pet-size: 200px;
@@ -366,17 +366,17 @@
 
     // ── State Machine Constants ───────────────────────
     const STATE_DURATIONS = {
-      normal: Infinity, playing: 3000, sleeping: Infinity,
-      happy: 3000, eating: 8000, angry: 4000
+      state1: Infinity, state2: 3000, state3: Infinity,
+      state4: 3000, state5: 8000, state6: 4000
     };
     const STATE_ANIMATIONS = {
-      normal: 'anim-float', playing: 'anim-bounce', sleeping: 'anim-sleep',
-      happy: 'anim-wiggle', eating: 'anim-pulse', angry: 'anim-shake'
+      state1: 'anim-float', state2: 'anim-bounce', state3: 'anim-sleep',
+      state4: 'anim-wiggle', state5: 'anim-pulse', state6: 'anim-shake'
     };
 
     let config         = null;
     let petStates      = null;
-    let currentState   = 'normal';
+    let currentState   = 'state1';
     let mediaList      = [];
     let bubbleTimer    = null;
     let stateTimer     = null;
@@ -388,16 +388,16 @@
 
     // ── setState ──────────────────────────────────────
     async function setState(newState, source) {
-      if (newState === currentState && newState !== 'sleeping') return;
+      if (newState === currentState && newState !== 'state3') return;
 
-      const wasPlaying = currentState === 'playing';
+      const wasPlaying = currentState === 'state2';
       const targetState = newState;
 
       currentState = newState;
       if (stateTimer) { clearTimeout(stateTimer); stateTimer = null; }
 
       // Stop play movement if leaving playing state
-      if (wasPlaying && targetState !== 'playing') stopPlayMovement();
+      if (wasPlaying && targetState !== 'state2') stopPlayMovement();
 
       // Clear all animation classes
       Object.values(STATE_ANIMATIONS).forEach(c => petArea.classList.remove(c));
@@ -408,7 +408,7 @@
       zzzContainer.style.display = 'none';
       idleDots.classList.remove('show');
 
-      if (petStates && petStates[targetState] && targetState !== 'normal') {
+      if (petStates && petStates[targetState] && targetState !== 'state1') {
         stateBadge.textContent = petStates[targetState].icon + ' ' + petStates[targetState].label;
         stateBadge.classList.add('visible');
         setTimeout(() => stateBadge.classList.remove('visible'), 2000);
@@ -420,22 +420,22 @@
       if (currentState !== targetState) return;
 
       // Auto-return to normal (except playing and sleeping)
-      if (targetState !== 'normal' && targetState !== 'sleeping' && targetState !== 'playing') {
+      if (targetState !== 'state1' && targetState !== 'state3' && targetState !== 'state2') {
         const dur = STATE_DURATIONS[targetState] || 3000;
         stateTimer = setTimeout(() => {
-          setState('normal', 'auto');
+          setState('state1', 'auto');
           resetIdleTimer();
         }, dur);
       }
 
-      if (targetState === 'sleeping') scheduleSleepBubble();
+      if (targetState === 'state3') scheduleSleepBubble();
 
-      if (targetState !== 'normal' && targetState !== 'sleeping') {
+      if (targetState !== 'state1' && targetState !== 'state3') {
         clearIdleTimers();
       }
 
       // Start play movement when entering playing state
-      if (targetState === 'playing') startPlayMovement();
+      if (targetState === 'state2') startPlayMovement();
     }
 
     // ── Play Movement: slowly follow mouse ────────────
@@ -448,7 +448,7 @@
     }
 
     function doPlayStep() {
-      if (currentState !== 'playing') return;
+      if (currentState !== 'state2') return;
 
       Promise.all([
         api.getWindowPos(),
@@ -507,8 +507,8 @@
         placeholder.style.display = 'none';
         petVideo.src = 'file://' + mediaPath;
         petVideo.play().catch(() => {});
-        if (state === 'sleeping') {
-          setTimeout(() => { if (currentState === 'sleeping') petVideo.pause(); }, 2000);
+        if (state === 'state3') {
+          setTimeout(() => { if (currentState === 'state3') petVideo.pause(); }, 2000);
         }
       } else if (isImage) {
         petVideo.style.display = 'none'; petVideo.src = '';
@@ -525,12 +525,12 @@
       petImage.style.display = 'none';
       petVideo.style.display = 'none'; petVideo.src = '';
       placeholder.style.display = 'flex';
-      placeholder.style.filter = (currentState === 'sleeping') ? 'brightness(0.8) saturate(0.5)' : 'none';
+      placeholder.style.filter = (currentState === 'state3') ? 'brightness(0.8) saturate(0.5)' : 'none';
     }
 
     // ── Sleep bubble ──────────────────────────────────
     function scheduleSleepBubble() {
-      if (currentState !== 'sleeping') return;
+      if (currentState !== 'state3') return;
       const msgs = ['zzZ...', '呼...呼...', 'Zzz...', '😴', '好困...zzZ'];
       showBubble(msgs[Math.floor(Math.random() * msgs.length)], 2500, true);
       if (stateTimer) clearTimeout(stateTimer);
@@ -622,7 +622,7 @@
         if (cooldown) return;
         cooldown = true; setTimeout(() => { cooldown = false; }, 600);
 
-        if (currentState === 'sleeping') {
+        if (currentState === 'state3') {
           wakeFromSleep();
           setTimeout(doClickInteract, 400);
         } else {
@@ -636,7 +636,7 @@
         const msg = config.clickResponses[Math.floor(Math.random() * config.clickResponses.length)];
         showBubble(msg, 2200, false);
       }
-      setState('playing', 'click');
+      setState('state2', 'click');
       resetIdleTimer();
     }
 
@@ -645,7 +645,7 @@
       if (cooldown) return;
       cooldown = true; setTimeout(() => { cooldown = false; }, 600);
 
-      if (currentState === 'sleeping') {
+      if (currentState === 'state3') {
         wakeFromSleep();
         setTimeout(() => doBtnInteract(btnDef), 400);
       } else {
@@ -657,12 +657,12 @@
       if (btnDef.responses?.length) {
         showBubble(btnDef.responses[Math.floor(Math.random() * btnDef.responses.length)], 2500, false);
       }
-      setState(btnDef.state || 'playing', 'btn:' + btnDef.label);
+      setState(btnDef.state || 'state2', 'btn:' + btnDef.label);
       resetIdleTimer();
     }
 
     function wakeFromSleep() {
-      setState('normal', 'wake');
+      setState('state1', 'wake');
       showBubble('嗯...醒啦! 😪', 2000, false);
     }
 
@@ -698,10 +698,10 @@
 
       const sleepSec = config.sleepAfterIdleSec || 30;
       // Don't auto-sleep while the pet is playing (following mouse)
-      if (sleepSec > 0 && currentState !== 'playing') {
+      if (sleepSec > 0 && currentState !== 'state2') {
         sleepTimer = setTimeout(() => {
-          if (currentState !== 'sleeping') {
-            setState('sleeping', 'idle');
+          if (currentState !== 'state3') {
+            setState('state3', 'idle');
             showBubble('zzZ... 好困呀...', 3000, true);
           }
         }, sleepSec * 1000);
@@ -714,7 +714,7 @@
       if (!config?.idleMessages?.length) return;
       const msg = config.idleMessages[Math.floor(Math.random() * config.idleMessages.length)];
       idleMsgTimer = setTimeout(() => {
-        if (currentState === 'normal') showBubble(msg.message, 3000, false);
+        if (currentState === 'state1') showBubble(msg.message, 3000, false);
         scheduleIdleMessage();
       }, msg.interval || 30000);
     }
@@ -723,9 +723,9 @@
     document.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       // Right-click during playing: cancel the movement
-      if (currentState === 'playing') {
+      if (currentState === 'state2') {
         stopPlayMovement();
-        setState('normal', 'cancel');
+        setState('state1', 'cancel');
         resetIdleTimer();
         showBubble('不追了~', 1500, false);
         return;
@@ -753,12 +753,12 @@
       switch (action) {
         case 'panel': api.openPanel(); break;
         case 'interact':
-          if (currentState === 'sleeping') wakeFromSleep();
+          if (currentState === 'state3') wakeFromSleep();
           if (config?.clickResponses?.length)
             showBubble(config.clickResponses[Math.floor(Math.random() * config.clickResponses.length)], 2200, false);
-          setState('playing', 'menu'); resetIdleTimer(); break;
+          setState('state2', 'menu'); resetIdleTimer(); break;
         case 'wake':
-          if (currentState === 'sleeping') wakeFromSleep();
+          if (currentState === 'state3') wakeFromSleep();
           resetIdleTimer(); break;
         case 'hide':
           container.style.opacity = '0';
@@ -837,10 +837,10 @@
         renderInteractionButtons();
         winW = (config?.petSize || 200) + 120;
         winH = winW + 44;
-        await setState('normal', 'init');
+        await setState('state1', 'init');
         resetIdleTimer();
       } catch (e) {
-        showBubble('你好呀~ 我是山海经桌宠! 🐕', 3000, false);
+        showBubble('你好呀~ 我是桌面精灵!', 3000, false);
         petArea.classList.add('anim-float');
       }
     }
@@ -863,8 +863,8 @@
     document.addEventListener('keydown', (e) => {
       if (e.ctrlKey && e.shiftKey && e.key === 'S') {
         e.preventDefault();
-        if (currentState !== 'sleeping') {
-          setState('sleeping', 'shortcut');
+        if (currentState !== 'state3') {
+          setState('state3', 'shortcut');
           showBubble('强制午休...zzZ', 3000, true);
         }
       }
