@@ -384,20 +384,15 @@
     let idleMsgTimer   = null;
     let sleepTimer     = null;
     let cooldown       = false;
-    let playMoveTimer  = null;
 
     // ── setState ──────────────────────────────────────
     async function setState(newState, source) {
       if (newState === currentState && newState !== 'state3') return;
 
-      const wasPlaying = currentState === 'state2';
       const targetState = newState;
 
       currentState = newState;
       if (stateTimer) { clearTimeout(stateTimer); stateTimer = null; }
-
-      // Stop play movement if leaving playing state
-      if (wasPlaying && targetState !== 'state2') stopPlayMovement();
 
       // Clear all animation classes
       Object.values(STATE_ANIMATIONS).forEach(c => petArea.classList.remove(c));
@@ -434,59 +429,9 @@
         clearIdleTimers();
       }
 
-      // Start play movement when entering playing state
-      if (targetState === 'state2') startPlayMovement();
     }
 
-    // ── Play Movement: slowly follow mouse ────────────
     let winW = 320, winH = 364;
-
-    function startPlayMovement() {
-      stopPlayMovement();
-      // Pause 1 second, then slowly follow the mouse
-      playMoveTimer = setTimeout(doPlayStep, 1000);
-    }
-
-    function doPlayStep() {
-      if (currentState !== 'state2') return;
-
-      Promise.all([
-        api.getWindowPos(),
-        api.getCursorPos()
-      ]).then(([winPos, cursorPos]) => {
-        if (!Array.isArray(winPos) || winPos.length < 2) return;
-        if (!Array.isArray(cursorPos) || cursorPos.length < 2) return;
-
-        const x = Number(winPos[0]), y = Number(winPos[1]);
-        const cursorX = Number(cursorPos[0]), cursorY = Number(cursorPos[1]);
-        if (!isFinite(x) || !isFinite(y) || !isFinite(cursorX) || !isFinite(cursorY)) return;
-
-        // Target: center the pet on the mouse cursor
-        const targetX = cursorX - winW / 2;
-        const targetY = cursorY - winH / 2;
-
-        const distX = targetX - x;
-        const distY = targetY - y;
-
-        // Slow easing: move based on configured speed (1=slowest, 10=fastest)
-        const speed = config?.moveSpeed || 5;
-        const ease = Math.min(speed * 0.016, 1);
-        let newX = x + distX * ease;
-        let newY = y + distY * ease;
-
-        if (!isFinite(newX) || !isFinite(newY)) return;
-
-        api.moveWindowTo([Math.round(newX), Math.round(newY)]);
-        // ~30fps update rate for smooth slow movement
-        playMoveTimer = setTimeout(doPlayStep, 33);
-      }).catch(() => {
-        playMoveTimer = setTimeout(doPlayStep, 50);
-      });
-    }
-
-    function stopPlayMovement() {
-      if (playMoveTimer) { clearTimeout(playMoveTimer); playMoveTimer = null; }
-    }
 
     async function loadStateMedia(state) {
       const filename = config?.stateMedias?.[state] || config?.activeMedia || null;
@@ -697,8 +642,7 @@
       idleTimer = setTimeout(() => idleDots.classList.add('show'), 10000);
 
       const sleepSec = config.sleepAfterIdleSec || 30;
-      // Don't auto-sleep while the pet is playing (following mouse)
-      if (sleepSec > 0 && currentState !== 'state2') {
+      if (sleepSec > 0) {
         sleepTimer = setTimeout(() => {
           if (currentState !== 'state3') {
             setState('state3', 'idle');
@@ -722,14 +666,6 @@
     // ── Context Menu ──────────────────────────────────
     document.addEventListener('contextmenu', (e) => {
       e.preventDefault();
-      // Right-click during playing: cancel the movement
-      if (currentState === 'state2') {
-        stopPlayMovement();
-        setState('state1', 'cancel');
-        resetIdleTimer();
-        showBubble('不追了~', 1500, false);
-        return;
-      }
       ctxMenu.style.left = Math.min(e.clientX, window.innerWidth - 160) + 'px';
       ctxMenu.style.top = Math.min(e.clientY, window.innerHeight - 240) + 'px';
       ctxMenu.classList.add('show');

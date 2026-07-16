@@ -436,22 +436,10 @@
     <div class="section-title"><span class="icon">📏</span>显示大小</div>
     <div class="slider-group">
       <span style="font-size:12px;color:var(--text2)">小</span>
-      <input type="range" id="sizeSlider" min="80" max="400" value="200" step="10">
+      <input type="range" id="sizeSlider" min="80" max="600" value="200" step="10">
       <span style="font-size:12px;color:var(--text2)">大</span>
       <span class="size-value" id="sizeValue">200px</span>
     </div>
-  </div>
-
-  <!-- ═══ Section: 移动速度 ═══ -->
-  <div class="section">
-    <div class="section-title"><span class="icon">🏃</span>移动速度</div>
-    <div class="slider-group">
-      <span style="font-size:12px;color:var(--text2)">慢</span>
-      <input type="range" id="speedSlider" min="1" max="10" value="5" step="1">
-      <span style="font-size:12px;color:var(--text2)">快</span>
-      <span class="size-value" id="speedValue">5</span>
-    </div>
-    <div class="tip">宠物跟踪鼠标时的移动速度。数值越大越快，推荐默认值 5。</div>
   </div>
 
   <!-- ═══ Section: 睡眠设置 ═══ -->
@@ -512,8 +500,6 @@
     const uploadZone      = document.getElementById('uploadZone');
     const sizeSlider      = document.getElementById('sizeSlider');
     const sizeValue       = document.getElementById('sizeValue');
-    const speedSlider     = document.getElementById('speedSlider');
-    const speedValue      = document.getElementById('speedValue');
     const sleepSlider     = document.getElementById('sleepSlider');
     const sleepValue      = document.getElementById('sleepValue');
     const stateMappingList = document.getElementById('stateMappingList');
@@ -550,7 +536,6 @@
       renderMediaGrid();
       renderStateMapping();
       renderSize();
-      renderSpeed();
       renderSleepSetting();
       renderInteractionButtons();
       renderClickResponses();
@@ -724,17 +709,6 @@
       config.petSize = val;
     });
 
-    // ── Speed ──────────────────────────────────────────
-    function renderSpeed() {
-      speedSlider.value = config.moveSpeed || 5;
-      speedValue.textContent = config.moveSpeed || 5;
-    }
-    speedSlider.addEventListener('input', () => {
-      const val = parseInt(speedSlider.value);
-      speedValue.textContent = val;
-      config.moveSpeed = val;
-    });
-
     // ── Sleep Setting ──────────────────────────────────
     function renderSleepSetting() {
       sleepSlider.value = config.sleepAfterIdleSec || 30;
@@ -875,7 +849,6 @@
     // ── Save ───────────────────────────────────────────
     saveBtn.addEventListener('click', async () => {
       config.petSize = parseInt(sizeSlider.value);
-      config.moveSpeed = parseInt(speedSlider.value);
       config.sleepAfterIdleSec = parseInt(sleepSlider.value);
       const result = await api.saveConfig(config);
       if (result.success) toast('设置已保存，桌宠已实时更新! ✨');
@@ -888,7 +861,6 @@
         activeMedia: config.activeMedia,
         stateMedias: { state1: '', state2: '', state3: '', state4: '', state5: '', state6: '' },
         petSize: 200,
-        moveSpeed: 5,
         sleepAfterIdleSec: 30,
         interactionButtons: [
           { label: '摸头', state: 'state4', responses: ['好舒服~', '再摸摸嘛~', '嘿嘿嘿~'] },

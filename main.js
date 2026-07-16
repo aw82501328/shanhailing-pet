@@ -51,10 +51,7 @@ const DEFAULT_CONFIG = {
   idleEnabled: true,
 
   // How many seconds of inactivity before entering sleeping state (0 = disabled)
-  sleepAfterIdleSec: 30,
-
-  // Movement speed when following mouse (1 = slowest, 10 = fastest)
-  moveSpeed: 5
+  sleepAfterIdleSec: 30
 };
 
 // ─── App State ───────────────────────────────────────────
@@ -316,7 +313,6 @@ function registerIPC() {
       const safeConfig = { ...DEFAULT_CONFIG };
       if (config.activeMedia !== undefined) safeConfig.activeMedia = String(config.activeMedia);
       if (typeof config.petSize === 'number' && isFinite(config.petSize)) safeConfig.petSize = config.petSize;
-      if (typeof config.moveSpeed === 'number' && isFinite(config.moveSpeed)) safeConfig.moveSpeed = config.moveSpeed;
       if (typeof config.sleepAfterIdleSec === 'number' && isFinite(config.sleepAfterIdleSec)) safeConfig.sleepAfterIdleSec = config.sleepAfterIdleSec;
       if (typeof config.idleEnabled === 'boolean') safeConfig.idleEnabled = config.idleEnabled;
       if (config.stateMedias && typeof config.stateMedias === 'object') {
