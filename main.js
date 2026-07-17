@@ -16,7 +16,7 @@ const PET_STATES = {
   state2: { label: '动作2', icon: '②', anim: 'bounce', desc: '点击或互动时显示' },
   state3: { label: '动作3', icon: '③', anim: 'sleep',  desc: '长时间无操作后自动进入' },
   state4: { label: '动作4', icon: '④', anim: 'wiggle', desc: '被抚摸时显示' },
-  state5: { label: '动作5', icon: '⑤', anim: 'pulse',  desc: '喂零食时显示' },
+  state5: { label: '动作5', icon: '⑤', anim: 'pulse',  desc: '触发动作5时显示' },
   state6: { label: '动作6', icon: '⑥', anim: 'shake',  desc: '反复戳弄后显示' }
 };
 
